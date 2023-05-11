@@ -1,12 +1,49 @@
-import { GetProds_controller, CreateProd_controller, DeleteProd_controller } from "../controllers/productos_controller.js"
+import {
+  GetProds_controller,
+  CreateProd_controller,
+  DeleteProd_controller,
+  schema
+} from "../controllers/productos_controller.js";
 import { Router } from "express";
+import { graphqlHTTP } from 'express-graphql';
 
 const router = Router();
 
-router.get("/", GetProds_controller)
+router.post("/", graphqlHTTP({
+    schema,
+    rootValue: {
+      GetProds_controller
+    },
+    graphiql: true,
+  }));
 
-router.post("/save", CreateProd_controller)
+router.post("/save", graphqlHTTP({
+    schema,
+    rootValue: {
+      CreateProd_controller
+    },
+    graphiql: true,
+  }));
 
-router.delete("/delete/:id", DeleteProd_controller)
+router.post("/delete", graphqlHTTP({
+    schema,
+    rootValue: {
+      DeleteProd_controller
+    },
+    graphiql: true,
+  }));
 
-export default  router
+router.use(
+  "/graphql",
+  graphqlHTTP({
+    schema,
+    rootValue: {
+      GetProds_controller,
+      CreateProd_controller,
+      DeleteProd_controller,
+    },
+    graphiql: true,
+  })
+);
+
+export default router;

@@ -1,83 +1,104 @@
 import productos_repository from "../repository/productos_repository.js"
-import { graphqlHTTP } from 'express-graphql';
 import { buildSchema } from 'graphql';
 
-const typeDefs = buildSchema(`
+export const schema = buildSchema(`
   type Producto {
     _id: ID!
-    title: String
-    price: String
-    thumbnail: String
-    timestamp: String
-    code: String
-    stock: String
-    brand: String
+    title: String!
+    price: String!
+    thumbnail: String!
+    timestamp: String!
+    code: String!
+    stock: String!
+    brand: String!
   }
 
   type Query {
-    productos: [Producto]
-    producto(id: ID!): Producto
+    GetProds_controller: [Producto]
+  }
+
+  input ProductoInput {
+    title: String!
+    brand: String!
+    price: Int
+    stock: Int
+    thumbnail: String!
   }
 
   type Mutation {
-    createProducto(title: String, price: String, thumbnail: String, code: String, stock: String, brand: String): Producto
-    deleteProducto(id: ID!): Producto
+    CreateProd_controller(data: ProductoInput): Producto
+    DeleteProd_controller(id: ID!): Producto
   }
 `);
 
-const resolvers = {
-  Query: {
-    productos: async () => {
-      return await productos_repository.find();
-    }
-  },
-  Mutation: {
-    createProducto: async (_, args) => {
-      const data = { ...args, timestamp: new Date().toLocaleString() };
-      const result = await productos_repository.save(data);
-      return result;
-    },
-    deleteProducto: async (_, { id }) => {
-      const result = await productos_repository.delete(id);
-      return result;
-    },
-  },
-};
-
-
-
-
-
-
-
-
-
-export const GetProds_controller = async (req, res) => {
+export const GetProds_controller = async () => {
   const productos = await productos_repository.find();
-  res.json(productos);
-};
+  return productos;
+}
 
-export const CreateProd_controller = async (req, res) => {
+export const CreateProd_controller = async ({ data }) => {
   try{
-    const data = req.body
     const result = await productos_repository.save(data)
-
     if (result.code === 409) {
-      return res.status(409).json(result);
+      throw res.status(409).json(result)
     }
-
-    return res.json(result)
+    return result
   }catch(err){
     console.log(err);
   }
 }
 
-export const DeleteProd_controller = async (req, res) => {
-  let {id} = req.params;
+export const DeleteProd_controller = async ({ id }) => {
   try{
     const result = await productos_repository.delete(id)
-    return res.json(result)
+    return result
   }catch(err){
     console.log(err);
   }
 }
+
+//QUERYS EN GRAPHQL:
+
+// {
+  // GetProds_controller{
+ 	//   _id		
+  //   title
+  //   price
+  //   thumbnail
+  //   timestamp
+  //   code
+  //   stock
+  //   brand
+  // }
+// }
+
+// mutation{
+//   CreateProd_controller(data: {
+//       title: "testGraphQL",
+//       brand: "GraphQL",
+//       price: 99,
+//       stock: 10,
+//       thumbnail: "no hay"}){
+//     _id
+//     title
+//     price
+//     thumbnail
+//     timestamp
+//     code
+//     stock
+//     brand
+//   }
+// }
+
+// mutation{
+//   DeleteProd_controller(id: "645c56db6025b12a3c413ac8"){
+//  	   _id		
+//       title
+//       price
+//       thumbnail
+//       timestamp
+//       code
+//       stock
+//       brand
+//   }
+// }

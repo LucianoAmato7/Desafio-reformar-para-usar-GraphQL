@@ -31,8 +31,9 @@ class ProductsDaoMongoDB {
 
       const newProd = new this.model(prodtoAdd);
       await newProd.save();
-      console.log("Producto creado con exito");
-      return prodtoAdd;
+      logger.info("Producto creado con exito");
+      const savedProd = await this.model.findOne({ title: prodtoAdd.title });
+      return savedProd;
     } catch (error) {
       logger.error(`Error en la API de productos: ${error}`);
     }
@@ -40,9 +41,14 @@ class ProductsDaoMongoDB {
 
   async DeleteProd(id){
     try{
+      const prodToDelete = await this.model.findById(id)
+      if(!prodToDelete){
+        logger.error(`El producto con ID: "${id}" no se encuentra en la Base de datos`)
+        return res.status(404).json({ error: 'Producto no encontrado' });
+      }
       await this.model.deleteOne({ _id: id });
       logger.info(`Objeto con id: ${id}, ha sido eliminado con exito`)
-      return await this.model.find({});
+      return prodToDelete
     }catch(error){
       logger.error(`Error en la API de productos: ${error}`);
     }

@@ -6,13 +6,31 @@ saveProd.addEventListener("click", (e) => {
 
 async function DeleteProd(id){
   console.log("DeleteProd ejecutada");
+
+  const query = `
+  mutation{
+    DeleteProd_controller(id: "${id}"){
+        _id		
+        title
+    }
+  }
+  `
   
   try{
-    await fetch(`http://localhost:8080/api/productos/delete/${id}`, {
-      method: "DELETE",
+    await fetch(`http://localhost:8080/api/productos/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        query
+      }),
     })
     .then(response => response.json())
-    .then(() => {
+    .then((data) => {
+      const prodEliminado = data.data.DeleteProd_controller
+      console.log(`Producto ${prodEliminado.title}, con ID: ${prodEliminado._id}, ha sido eliminado`);
       ViewProds();
     })
   }catch(error){
@@ -23,10 +41,31 @@ async function DeleteProd(id){
 async function ViewProds() {
   console.log("ViewProds ejecutada");
   try {
-    await fetch("http://localhost:8080/api/productos")
+
+    const query = `
+    query {
+      GetProds_controller{
+        _id 
+        title 
+        price 
+        thumbnail 
+        brand
+      }
+    }`
+
+    await fetch("http://localhost:8080/api/productos", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify({
+        query
+      }),
+    })
     .then(response => response.json())
     .then(data => {
-      const productos = data;
+      const productos = data.data.GetProds_controller;
       if (productos) {
         document.getElementById("vistaProdsContainer").innerHTML = `
             <div class="table-responsive">
@@ -41,10 +80,10 @@ async function ViewProds() {
                       (prod) =>
                         `<tr>
                             <td class="align-middle">${prod._id}</td>
-                            <td class="align-middle">${prod.title}</td>
+                            <td class="align-middle">${prod.brand} ${prod.title}</td>
                             <td class="align-middle">$${prod.price}</td>
                             <td class="align-middle">
-                                <img src=${prod.thumbnail} style="width: 80px">
+                                <img src="${prod.thumbnail}" style="width: 80px">
                             </td>
                             <td>
                               <img src="./images/icon-trash.png" clas="" id="_${prod._id}">
@@ -92,16 +131,34 @@ async function AddProducto() {
     stock: document.getElementById("stock").value,
   };
 
+  const query = `
+  mutation{
+    CreateProd_controller(data: {
+      title: "${productoN.title}"
+      brand: "${productoN.brand}"
+      price: ${productoN.price}
+      stock: ${productoN.stock}
+      thumbnail: "${productoN.thumbnail}"
+    }){
+      _id
+    }
+  }
+  `
+
   try {
     await fetch("http://localhost:8080/api/productos/save", {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json"
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(productoN)
+      body: JSON.stringify({
+        query
+      }),
     })
-    .then((resp)=>{resp.json()})
-    .then(()=>{
+    .then((resp)=>{return resp.json()})
+    .then((data)=>{
+      const _id = data.data.CreateProd_controller._id
+      console.log(`Producto agregado bajo el ID: ${_id}`);
       ViewProds();
     })
   } catch (error) {
